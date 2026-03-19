@@ -1,6 +1,6 @@
 {
     "name": "hexawebsystems/laravel-hexa-package-sapling",
-    "description": "Sapling AI content detection API integration for the Hexa Core framework.",
+    "description": "Sapling AI — content detection and grammar checking API for AI-generated text analysis and proofreading.",
     "type": "library",
     "license": "proprietary",
     "require": {
