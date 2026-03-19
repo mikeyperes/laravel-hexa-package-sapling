@@ -9,7 +9,7 @@ class SaplingServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        ->mergeConfigFrom(__DIR__ . '/../../config/sapling.php', 'sapling');
+        $this->mergeConfigFrom(__DIR__ . '/../../config/sapling.php', 'sapling');
         $this->app->singleton(SaplingService::class);
     }
 
