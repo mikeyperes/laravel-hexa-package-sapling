@@ -4,6 +4,7 @@ namespace hexa_package_sapling\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use hexa_package_sapling\Services\SaplingService;
+use hexa_core\Services\PackageRegistryService;
 
 /**
  * SaplingServiceProvider — registers Sapling package services, routes, views.
@@ -30,19 +31,11 @@ class SaplingServiceProvider extends ServiceProvider
     {
         $this->loadRoutesFrom(__DIR__ . '/../../routes/sapling.php');
         $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'sapling');
-        $this->registerSidebarItems();
-    }
 
-    /**
-     * Push sidebar menu items into core layout stacks.
-     *
-     * @return void
-     */
-    private function registerSidebarItems(): void
-    {
-        view()->composer('layouts.app', function ($view) {
-            if (config('hexa.app_controls_sidebar', false)) return;
-            $view->getFactory()->startPush('sidebar-sandbox', view('sapling::partials.sidebar-menu')->render());
-        });
+        // Sidebar links — registered via PackageRegistryService with auto permission checks
+        if (!config('hexa.app_controls_sidebar', false)) {
+            $registry = app(PackageRegistryService::class);
+            $registry->registerSidebarLink('sapling.index', 'Sapling', 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', 'Sandbox', 'sapling', 85);
+        }
     }
 }
