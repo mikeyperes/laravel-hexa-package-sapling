@@ -41,6 +41,13 @@ class SaplingServiceProvider extends ServiceProvider
             // HWS-SIDEBAR-MENU-3L-END
 
             $registry->registerSidebarLink('sapling.index', 'Sapling', 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z', 'Sandbox', 'sapling', 85);
+            $registry->registerPackage('sapling', 'hexawebsystems/laravel-hexa-package-sapling', [
+                'title' => 'Sapling',
+                'description' => 'Sapling grammar and writing-quality integration for generated copy review.',
+                'icon' => 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
+                'color' => 'emerald',
+                'settingsRoute' => 'sapling.index',
+            ]);
         }
     }
 }
