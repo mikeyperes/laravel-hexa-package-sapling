@@ -2,9 +2,11 @@
 
 namespace hexa_package_sapling\Services;
 
+use hexa_core\AI\Contracts\AiTransactionRecorder;
+use hexa_core\Models\Setting;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use hexa_core\Models\Setting;
 
 class SaplingService
 {
@@ -30,11 +32,12 @@ class SaplingService
         }
 
         try {
-            $response = Http::timeout(10)
-                ->post('https://api.sapling.ai/api/v1/aidetect', [
-                    'key' => $key,
-                    'text' => 'This is a test sentence to verify the API key works correctly.',
-                ]);
+            $response = $this->requestDetection(
+                $key,
+                'This is a test sentence to verify the API key works correctly.',
+                10,
+                'detector.connection_test',
+            );
 
             if ($response->successful()) {
                 return ['success' => true, 'message' => 'Sapling API key is valid.'];
@@ -66,11 +69,7 @@ class SaplingService
         }
 
         try {
-            $response = Http::timeout(30)
-                ->post('https://api.sapling.ai/api/v1/aidetect', [
-                    'key' => $key,
-                    'text' => $text,
-                ]);
+            $response = $this->requestDetection($key, $text, 30, 'detector.scan');
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -92,6 +91,50 @@ class SaplingService
         } catch (\Exception $e) {
             Log::error('SaplingService::detect error', ['error' => $e->getMessage()]);
             return ['success' => false, 'message' => 'Error: ' . $e->getMessage(), 'data' => null];
+        }
+    }
+
+    private function requestDetection(string $apiKey, string $text, int $timeout, string $operation): Response
+    {
+        $endpoint = 'https://api.sapling.ai/api/v1/aidetect';
+        $units = ['characters' => mb_strlen($text), 'words' => str_word_count($text)];
+        $span = app(AiTransactionRecorder::class)->start([
+            'provider' => 'sapling',
+            'package' => 'hexawebsystems/laravel-hexa-package-sapling',
+            'model' => 'sapling-ai-detector-v1',
+            'operation' => $operation,
+            'endpoint' => '/api/v1/aidetect',
+            'request_metadata' => array_merge($units, ['timeout_seconds' => $timeout]),
+        ]);
+
+        try {
+            $response = Http::timeout($timeout)->post($endpoint, [
+                'key' => $apiKey,
+                'text' => $text,
+            ]);
+            $attributes = [
+                'provider_request_id' => $response->header('x-request-id'),
+                'http_status' => $response->status(),
+                'usage' => $units,
+                'response_metadata' => [
+                    'score' => $response->json('score'),
+                    'sentence_score_count' => count((array) $response->json('sentence_scores', [])),
+                ],
+            ];
+
+            if ($response->successful()) {
+                $span->succeed($attributes);
+            } else {
+                $span->fail((string) ($response->json('msg') ?? 'Sapling request failed.'), array_merge($attributes, [
+                    'error_type' => 'sapling_http_error',
+                ]));
+            }
+
+            return $response;
+        } catch (\Throwable $e) {
+            $span->fail($e, ['usage' => $units]);
+
+            throw $e;
         }
     }
 }

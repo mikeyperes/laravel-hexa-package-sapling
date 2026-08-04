@@ -2,9 +2,11 @@
     "name": "hexawebsystems/laravel-hexa-package-sapling",
     "description": "Sapling AI — content detection and grammar checking API for AI-generated text analysis and proofreading.",
     "type": "library",
+    "version": "2.0.6",
     "license": "proprietary",
     "require": {
-        "php": "^8.2"
+        "php": "^8.2",
+        "hexawebsystems/laravel-hexa-core": "*"
     },
     "autoload": {
         "psr-4": {
